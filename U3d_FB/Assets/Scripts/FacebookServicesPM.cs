@@ -13,9 +13,12 @@ public class FacebookServicesPM : IDisposable
         public ReactiveCommand onLogoutFacebook;
         public ReactiveCommand onClickAuthFacebook;
         public ReactiveCommand onClickLogoutFacebook;
+        public ReactiveCommand onClickLoadFriends;
 
-        public ReactiveCommand onClickLoadPersonData;
+        public ReactiveCommand<string> onClickLaunchCommand;
         public ReactiveCommand<string> onDataLoaded;
+        public ReactiveCommand<string> onFriendsLoaded;
+        public ReactiveCommand<string> onError;
     }
 
     private Ctx _ctx;
@@ -24,10 +27,11 @@ public class FacebookServicesPM : IDisposable
     {
         _ctx = ctx;
 
-        _ctx.onClickAuthFacebook.Subscribe(_=>Auth());
-        _ctx.onClickLogoutFacebook.Subscribe(_=>Logout());
-        
-        _ctx.onClickLoadPersonData.Subscribe(_=>LoadPersonData());
+        _ctx.onClickAuthFacebook.Subscribe(_ => Auth());
+        _ctx.onClickLogoutFacebook.Subscribe(_ => Logout());
+        _ctx.onClickLoadFriends.Subscribe(_ => LoadFriends());
+
+        _ctx.onClickLaunchCommand.Subscribe(LaunchCommand);
 
         Init();
     }
@@ -95,23 +99,47 @@ public class FacebookServicesPM : IDisposable
         else
         {
             Debug.Log($"[FACEBOOK] login failure: {result.RawResult}");
+            _ctx.onError.Execute($"<color=red>failure:<color> {result.RawResult}");
         }
     }
 //-----------------------------------------
 
-    private void LoadPersonData()
+    private void LaunchCommand(string query)
     {
         if (!FB.IsLoggedIn)
             return;
-        
-        var query =
-            "/me?fields=id,name,first_name,middle_name,last_name,name_format,email,gender,installed";
+
+        FB.API(query, HttpMethod.GET, GetUserInfoCallback);
+    }
+    
+    private void LoadFriends()
+    {
+        if (!FB.IsLoggedIn)
+            return;
+
+        var query = "/me/friends";
+        FB.API(query, HttpMethod.GET, GetUserFriendsCallback);
+    }
+    
+    private void LoadPersonData()
+    {
+        var myInfo = "/me?fields=id,name,first_name,middle_name,last_name,email,gender";
+        var friendList = "/me/friends";
+
+        if (!FB.IsLoggedIn)
+            return;
+
+        var query = friendList;
         FB.API(query, HttpMethod.GET, GetUserInfoCallback);
     }
 
     private void GetUserInfoCallback(IGraphResult result)
     {
         _ctx.onDataLoaded.Execute(result.RawResult);
+    }
+    private void GetUserFriendsCallback(IGraphResult result)
+    {
+        _ctx.onFriendsLoaded.Execute(result.RawResult);
     }
 
     public void Dispose()

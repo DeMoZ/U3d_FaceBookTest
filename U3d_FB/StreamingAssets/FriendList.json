@@ -1,0 +1,37 @@
+{
+  "data": [
+    {
+      "id": "109297611688245",
+      "name": "Roman",
+      "picture": {
+        "data": {
+          "height": 600,
+          "is_silhouette": false,
+          "url": "https:\/\/platform-lookaside.fbsbx.com\/platform\/profilepic\/?asid=109297611688245&gaming_photo_type=unified_picture&ext=1648308543&hash=AeRmcXhZ9t6W3rUGdaI",
+          "width": 600
+        }
+      }
+    },
+    {
+      "id": "108214385134704",
+      "name": "Daniel",
+      "picture": {
+        "data": {
+          "height": 600,
+          "is_silhouette": false,
+          "url": "https:\/\/platform-lookaside.fbsbx.com\/platform\/profilepic\/?asid=108214385134704&gaming_photo_type=unified_picture&ext=1648308543&hash=AeTpuKVbV-ChZWsA15Y",
+          "width": 600
+        }
+      }
+    }
+  ],
+  "paging": {
+    "cursors": {
+      "before": "MAZDZD",
+      "after": "MQZDZD"
+    }
+  },
+  "summary": {
+    "total_count": 2
+  }
+}
