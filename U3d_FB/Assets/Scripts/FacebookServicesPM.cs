@@ -22,7 +22,8 @@ public class FacebookServicesPM : IDisposable
     }
 
     private Ctx _ctx;
-
+    private int _countActivateCalls = 0; 
+    
     public FacebookServicesPM(Ctx ctx)
     {
         _ctx = ctx;
@@ -42,7 +43,7 @@ public class FacebookServicesPM : IDisposable
         if (FB.IsLoggedIn)
             return;
 
-        var perms = new List<string>() { "public_profile", "email" };
+        var perms = new List<string>() { "public_profile", "user_friends" };
         FB.LogInWithReadPermissions(perms, AuthCallback);
     }
 
@@ -63,22 +64,29 @@ public class FacebookServicesPM : IDisposable
 
     private void InitCallback()
     {
+        Debug.LogWarning($"[FacebookServicesPm] check FB.IsInitialized on init {FB.IsInitialized}");
+
         if (FB.IsInitialized)
             ActivateApp();
     }
 
     private void ActivateApp()
     {
-        FB.ActivateApp();
+        _countActivateCalls++;
+        Debug.Log($"[FacebookServicesPm] Call Activate App times = {_countActivateCalls}");
 
-        //AuthCheckAfterDelay(1).DoAsync();
+        FB.ActivateApp();
         AuthCheckAfterDelay(1);
     }
 
     private async Task AuthCheckAfterDelay(float delaySeconds)
     {
-        await Task.Delay((int)(delaySeconds * 1000));
+        await Task.Delay((int) (delaySeconds * 1000));
 
+        var isLoggedInPlugin = FB.IsLoggedIn;
+
+        Debug.Log($"[FacebookServicesPm] FB.IsLoggedIn = {isLoggedInPlugin}");
+        
         if (FB.IsLoggedIn)
             _ctx.onAuthFacebook.Execute(FB.Mobile.UserID);
     }
@@ -92,14 +100,14 @@ public class FacebookServicesPM : IDisposable
     {
         if (FB.IsLoggedIn)
         {
-            Debug.Log("[FACEBOOK] login success");
+            Debug.Log("[FacebookServicesPm] [FACEBOOK] login success");
             var accessToken = result.AccessToken;
             _ctx.onAuthFacebook.Execute(accessToken.UserId);
         }
         else
         {
-            Debug.Log($"[FACEBOOK] login failure: {result.RawResult}");
-            _ctx.onError.Execute($"<color=red>failure:<color> {result.RawResult}");
+            Debug.Log($"[FacebookServicesPm] [FACEBOOK] login failure: {result.RawResult}");
+            _ctx.onError.Execute($"{result.RawResult}");
         }
     }
 //-----------------------------------------
