@@ -39,9 +39,12 @@ public class FacebookServicesPM : IDisposable
 
     private void Auth()
     {
-        Debug.Log($"<color=red>FB</color> logIn clicked");
+        Debug.Log($"[FacebookServicesPm]  logIn clicked");
         if (FB.IsLoggedIn)
+        {
+            Debug.Log($"[FacebookServicesPm]  Already logged in, return;");
             return;
+        }
 
         var perms = new List<string>() { "public_profile", "user_friends" };
         FB.LogInWithReadPermissions(perms, AuthCallback);
@@ -49,7 +52,7 @@ public class FacebookServicesPM : IDisposable
 
     private void Logout()
     {
-        Debug.Log($"<color=red>FB</color> logOut clicked");
+        Debug.Log($"[FacebookServicesPm] logOut clicked");
         FB.LogOut();
         _ctx.onLogoutFacebook.Execute();
     }
@@ -75,20 +78,28 @@ public class FacebookServicesPM : IDisposable
         _countActivateCalls++;
         Debug.Log($"[FacebookServicesPm] Call Activate App times = {_countActivateCalls}");
 
-        FB.ActivateApp();
-        AuthCheckAfterDelay(1);
+        //FB.ActivateApp();
+        AuthCheckAfterDelay();
     }
 
-    private async Task AuthCheckAfterDelay(float delaySeconds)
+    private async Task AuthCheckAfterDelay(float? delaySeconds = null)
     {
-        await Task.Delay((int) (delaySeconds * 1000));
+        if(delaySeconds.HasValue)
+            await Task.Delay((int) (delaySeconds * 1000));
 
         var isLoggedInPlugin = FB.IsLoggedIn;
 
         Debug.Log($"[FacebookServicesPm] FB.IsLoggedIn = {isLoggedInPlugin}");
-        
+
         if (FB.IsLoggedIn)
+        {
             _ctx.onAuthFacebook.Execute(FB.Mobile.UserID);
+            Debug.Log($"[FacebookServicesPm] FB.IsLoggedIn ; will ask for FB.ClientToken");
+            Debug.Log($"[FacebookServicesPm] FB.IsLoggedIn ; FB.ClientToken = {FB.ClientToken}");
+            var query = "/me/friends";
+            
+            FB.API(query, HttpMethod.GET, GetUserFriendsCallback);
+        }
     }
 
     private void OnHideUnity(bool isGameShown)
@@ -98,6 +109,7 @@ public class FacebookServicesPM : IDisposable
 
     private void AuthCallback(ILoginResult result)
     {
+        Debug.Log($"[FacebookServicesPm] [FACEBOOK] AuthCallback, result: {result}");
         if (FB.IsLoggedIn)
         {
             Debug.Log("[FacebookServicesPm] [FACEBOOK] login success");
@@ -124,29 +136,21 @@ public class FacebookServicesPM : IDisposable
     {
         if (!FB.IsLoggedIn)
             return;
-
+    
         var query = "/me/friends";
         FB.API(query, HttpMethod.GET, GetUserFriendsCallback);
-    }
-    
-    private void LoadPersonData()
-    {
-        var myInfo = "/me?fields=id,name,first_name,middle_name,last_name,email,gender";
-        var friendList = "/me/friends";
-
-        if (!FB.IsLoggedIn)
-            return;
-
-        var query = friendList;
-        FB.API(query, HttpMethod.GET, GetUserInfoCallback);
     }
 
     private void GetUserInfoCallback(IGraphResult result)
     {
+        Debug.Log($"[FacebookServicesPm] [FACEBOOK] GetUser Info {result.RawResult}");
         _ctx.onDataLoaded.Execute(result.RawResult);
     }
     private void GetUserFriendsCallback(IGraphResult result)
     {
+        Debug.Log($"[FacebookServicesPm] [FACEBOOK] GetUser Friends ERROR {result.Error}");
+         
+        Debug.Log($"[FacebookServicesPm] [FACEBOOK] GetUser Friends {result.RawResult}");
         _ctx.onFriendsLoaded.Execute(result.RawResult);
     }
 
